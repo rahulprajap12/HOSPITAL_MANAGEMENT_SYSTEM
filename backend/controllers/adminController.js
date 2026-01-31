@@ -1,16 +1,21 @@
 import validator from "validator"
 import bycrypt from 'bcrypt'
 import {v2 as cloudinary} from 'cloudinary'
+import docterModel from "../models/docterModel.js"
+import jwt from 'jsonwebtoken'  
+// import { JsonWebTokenError } from "jsonwebtoken"
 
-const addDoctor = async (req, res) => {
+const addDoctor = async (req, res) => { 
+    // API for adding doctor
     try {
         const { name, email, password, sepcilty, degree, exprince, about, fees, address } = req.body
-        const imageFile = req.file
+        
 
         console.log(
             { name, email, password, sepcilty, degree, exprince, about, fees, address },
             imageFile
         )
+        const imageFile=req.file
         if (
             !name ||
             !email ||
@@ -42,14 +47,39 @@ const addDoctor = async (req, res) => {
         // upload image to cloudinary
 
         const imageUpload=await cloudinary.uploader.upload(imageFile.path, {resource_type:"image"})
+        const imageUrl=imageUpload.secure_url
+
+        const newDoctor=new doctorModel(doctorData)
+        await newDoctor.save()
+
+        res.json({success:true ,message:"Doctor Added"})
 
 
 
         res.send("Doctor added")
     } catch (error) {
         console.log(error)
-        res.send("Error")
+        
+        res.send({success:false,message:error.message})
     }
 }
 
-export { addDoctor }
+// API For admin Login
+const loginAdmin =async(req,res) =>{
+    try{
+        const {email ,password}=req.body
+        if(email===process.env.ADMIN_EMAI && process.env.ADMIN_PASSWORD){
+            const token=jwt.sign(email+password,process.env.JWT_SECRET)
+            res.json({success:true,token})
+        }else{
+            res.json({success:file,message:"Invalid credentials"})
+        }
+
+    }catch(error){
+        console.log(error)
+        res.send({success:false,message:error.message}) 
+    }
+    
+}
+
+export { addDoctor,loginAdmin }
